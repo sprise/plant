@@ -7,18 +7,18 @@ const TARGET = process.env.TARGET;
 const ROOT_PATH = path.resolve(__dirname);
 
 const common = {
-  addVendor: function (vendorName, moduleLocation) {
-    moduleLocation = path.join(__dirname, moduleLocation);
-    this.resolve.alias[vendorName] = moduleLocation;
-    // this.module.noParse.push(new RegExp(moduleLocation));
-  },
   entry: [
     // 'bootstrap-webpack!./bootstrap.config.js',
     path.resolve(ROOT_PATH, 'app/main')
   ],
   resolve: {
-    extensions: ['', '.js', '.jsx'],
-    alias: {}
+    extensions: ['.js', '.jsx'],
+    alias: {
+      'jquery': path.join(__dirname, 'node_modules/jquery/dist/jquery.js'),
+      'bootstrap': path.join(__dirname, 'node_modules/bootstrap/dist/js/bootstrap.js'),
+      'konva': path.join(__dirname, 'node_modules/konva/konva.js'),
+      'bootstrap.css': path.join(__dirname, 'node_modules/bootstrap/dist/css/bootstrap.css'),
+    },
   },
   output: {
     path: path.resolve(ROOT_PATH, 'build'),
@@ -28,15 +28,14 @@ const common = {
     publicPath: '/'
   },
   module: {
-    noParse: [],
-    loaders: [
-      {
-        test: /\.json$/,
-        loaders: ['json']
-      },
+    rules: [
       {
         test: /\.css$/,
-        loaders: ['style', 'css']
+        use: [{
+          loader: 'style-loader'
+        }, {
+          loader: 'css-loader'
+        }]
       },
       // **IMPORTANT** This is needed so that each bootstrap js file required by
       // bootstrap-webpack has access to the jQuery object
@@ -46,23 +45,33 @@ const common = {
       // loads bootstrap's css.
       {
         test: /\.woff(\?v=\d+\.\d+\.\d+)?$/,
-        loader: 'url?limit=10000&mimetype=application/font-woff'
+        use: [{
+          loader: 'url-loader?limit=10000&mimetype=application/font-woff'
+        }],
       },
       {
         test: /\.woff2(\?v=\d+\.\d+\.\d+)?$/,
-        loader: 'url?limit=10000&mimetype=application/font-woff'
+        use: [{
+          loader: 'url-loader?limit=10000&mimetype=application/font-woff'
+        }],
       },
       {
         test: /\.ttf(\?v=\d+\.\d+\.\d+)?$/,
-        loader: 'url?limit=10000&mimetype=application/octet-stream'
+        use: [{
+          loader: 'url-loader?limit=10000&mimetype=application/octet-stream'
+        }],
       },
       {
         test: /\.eot(\?v=\d+\.\d+\.\d+)?$/,
-        loader: 'file'
+        use: [{
+          loader: 'file-loader'
+        }],
       },
       {
         test: /\.svg(\?v=\d+\.\d+\.\d+)?$/,
-        loader: 'url?limit=10000&mimetype=image/svg+xml'
+        use: [{
+          loader: 'url-loader?limit=10000&mimetype=image/svg+xml'
+        }],
       }
     ]
   },
@@ -77,26 +86,17 @@ const common = {
   ]
 };
 
-common.addVendor('jquery', 'node_modules/jquery/dist/jquery.js');
-common.addVendor('bootstrap', 'node_modules/bootstrap/dist/js/bootstrap.js');
-common.addVendor('konva', 'node_modules/konva/konva.js');
-common.addVendor('bootstrap.css', 'node_modules/bootstrap/dist/css/bootstrap.css');
 
 if(TARGET === 'build') {
   module.exports = merge(common, {
     module: {
-      loaders: [
-        {
-          // test for both js and jsx
-          test: /\.jsx?$/,
-
-          // use babel loader with Stage 1 features
-          loader: 'babel?presets[]=stage-1',
-
-          // operate only on our app directory
-          include: path.resolve(ROOT_PATH, 'app')
-        }
-      ]
+      rules: [{
+        test: /\.jsx?$/,
+        use: [{
+          loader: 'babel-loader?presets[]=stage-1'
+        }],
+        include: path.resolve(ROOT_PATH, 'app')
+      }]
     },
     plugins: [
       new webpack.DefinePlugin({
@@ -146,13 +146,15 @@ if(TARGET === 'dev') {
     ],
     // devtool: 'source-map',
     module: {
-      loaders: [
-        {
-          test: /\.jsx?$/,
-          loaders: ['react-hot-loader/webpack', 'babel?presets[]=stage-1'],
-          include: path.resolve(ROOT_PATH, 'app')
-        }
-      ]
+      rules: [{
+        test: /\.jsx?$/,
+        use: [{
+          loader: 'react-hot-loader/webpack'
+        }, {
+          loader: 'babel-loader?presets[]=stage-1'
+        }],
+        include: path.resolve(ROOT_PATH, 'app')
+      }]
     },
     devServer: {
       proxy: passthrough,
