@@ -23,6 +23,7 @@
     "no-underscore-dangle": 0,
     "no-shadow": [2, {"allow": [
       "Location"
-    ]}]
+    ]}],
+    "react/jsx-no-bind": 2
   }
 }
